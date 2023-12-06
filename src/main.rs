@@ -16,12 +16,9 @@ fn main() {
     // Create a channel
     let (tx, rx) = mpsc::channel();
 
-    // Server thread
-    let tx_clone = tx.clone();
-
     // thread a server;
     thread::spawn(move || {
-        server::run_server(&addr[..], tx_clone);
+        server::run_server(&addr[..], tx);
     });
 
     rx.recv().unwrap();
