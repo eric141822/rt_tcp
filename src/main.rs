@@ -1,4 +1,4 @@
-use std::{env, sync::mpsc, thread};
+use std::{env, sync::mpsc, thread, io};
 mod client;
 mod common;
 mod server;
@@ -10,18 +10,28 @@ fn main() {
         return;
     }
 
-    let addr: String = format!("{}:{}", common::HOST, args[1]);
-    let addr2 = addr.clone();
+    let base_addr: String = format!("{}:{}", common::HOST, args[1]);
+    let addr = base_addr.clone();
 
     // Create a channel
     let (tx, rx) = mpsc::channel();
 
     // thread a server;
     thread::spawn(move || {
-        server::run_server(&addr[..], tx);
+        server::run_server(&addr, tx);
     });
 
     rx.recv().unwrap();
 
-    client::run_client(&addr2[..]);
+    // shadow addr.
+    let addr = base_addr.clone();
+    
+    client::run_client_hello(&addr);
+
+    // get input message from stdin.
+    let mut msg = String::new();
+    println!("Enter a message: ");
+    io::stdin().read_line(&mut msg).expect("Failed to parse message.");
+
+    client::run_client(&addr, &msg);
 }
