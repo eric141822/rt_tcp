@@ -1,14 +1,12 @@
 extern crate rt_tcp;
 
+use rt_tcp::common;
+use std::env;
 use std::io::prelude::*;
 use std::net::TcpStream;
-use std::env;
-
-use rt_tcp::common;
 
 fn run_client(addr: &str, msg: &str) {
     println!("Connecting to {}", addr);
-
     if let Ok(mut stream) = TcpStream::connect(addr) {
         stream.write(msg.as_bytes()).unwrap();
         println!("Sent message: {}", msg);
@@ -26,18 +24,22 @@ fn main() {
 
     let addr: String = format!("{}:{}", common::HOST, args[1]);
 
-
-    // get input message from stdin.
     let mut msg = String::new();
-    println!("Enter a message: ");
-    std::io::stdin().read_line(&mut msg).expect("Failed to parse message.");
+    loop {
+        println!("Enter a message, or EXIT to quit: ");
+        if let Err(e) = std::io::stdin().read_line(&mut msg) {
+            eprintln!("Error: {}", e);
+            continue;
+        }
 
-    run_client(&addr, &msg.trim());
+        let trimmed_msg = msg.trim();
 
-    msg.clear();
-    
-    println!("Enter a message: ");
-    std::io::stdin().read_line(&mut msg).expect("Failed to parse message.");
+        // equal ignore case.
+        if trimmed_msg.eq_ignore_ascii_case("EXIT") {
+            break;
+        }
 
-    run_client(&addr, &msg);
+        run_client(&addr, &trimmed_msg);
+        msg.clear();
+    }
 }
